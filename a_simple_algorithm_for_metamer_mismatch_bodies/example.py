@@ -14,7 +14,7 @@ def plot_3d_mesh(vertices, faces, filename):
 		   i=np.array(faces)[:,0],
 		   j=np.array(faces)[:,1],
 		   k=np.array(faces)[:,2],
-		   opacity=0.3)
+		   opacity=1)
 
 	layout = \
 		go.Layout(
@@ -42,21 +42,28 @@ D65_Illuminant = \
 	colour.ILLUMINANTS_RELATIVE_SPDS["D65"].\
 		interpolate(standard_visible_range).values
 
+A_Illuminant = \
+	colour.ILLUMINANTS_RELATIVE_SPDS["A"].\
+		interpolate(standard_visible_range).values
+
 # green channel response to the illuminant is the typical scale factor
-nikon_scale_factor = np.dot(Nikon_Observer_functions.T, D65_Illuminant)[1]
+# nikon_scale_factor = np.dot(Nikon_Observer_functions.T, D65_Illuminant)[1]
 XYZ_scale_factor = np.dot(XYZ_Observer_functions.T, D65_Illuminant)[1]
 
 # compute the nikon response to an illuminated gray surface
 gray_surface_reflectance = [0.5] * 31
-nikon_color_response = np.dot(Nikon_Observer_functions.T, np.multiply(D65_Illuminant, gray_surface_reflectance))
+color_response = np.dot(XYZ_Observer_functions.T, np.multiply(A_Illuminant, gray_surface_reflectance))
 
-# compute the metamere mismatch body for the nikon color and a human observer
+# compute the metamere mismatch body for the following scenario
+# A 50% gray is viewed by a human under A_illuminant, what is the MMB relative to a Nikon camera
+# viewing the scene under D65. This is observer *and* illuminant induced metamerism, usually you
+# vary one or the other.
 mmb_extrema_points = \
 	compute_metamere_mismatch_body(
-		observer_color_signal_Φ=nikon_color_response,
-		observer_response_functions_Φ=Nikon_Observer_functions,
-		observer_response_functions_Ψ=XYZ_Observer_functions,
-		scene_illumination_Φ=D65_Illuminant,
+		observer_color_signal_Φ=color_response,
+		observer_response_functions_Φ=XYZ_Observer_functions,
+		observer_response_functions_Ψ=Nikon_Observer_functions,
+		scene_illumination_Φ=A_Illuminant,
 		scene_illumination_Ψ=D65_Illuminant)
 
 # scale the result so that the illuminant color is the upper bound
@@ -64,4 +71,4 @@ relative_mmb_extrema_points = [p/XYZ_scale_factor for p in mmb_extrema_points]
 
 mmb_convex_hull = ConvexHull(relative_mmb_extrema_points)
 
-plot_3d_mesh(mmb_convex_hull.points, mmb_convex_hull.simplices, "mmb.html")
+plot_3d_mesh(mmb_convex_hull.points, mmb_convex_hull.simplices, "mmb_plot.html")
