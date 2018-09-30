@@ -50,7 +50,7 @@ def solve_linear_program(
 
     return (xmin, xmax)
 
-def compute_metamere_mismatch_body(
+def compute_metamer_mismatch_body(
     observer_color_signal_Φ,
     observer_response_functions_Φ,
     observer_response_functions_Ψ,
@@ -78,7 +78,7 @@ def compute_metamere_mismatch_body(
         # matrix multiplied against itself)
         #
         # This functional can be thought of stacks of parallel
-        # planes that are normal to `direction_vector`. Two of these planes will lie tangent to our metamere
+        # planes that are normal to `direction_vector`. Two of these planes will lie tangent to our metamer
         # mismatch body.
         direction_functional = direction_vector
 
@@ -97,9 +97,9 @@ def compute_metamere_mismatch_body(
         #       physically realizable reflectances
         #
         #    2) constrain the solution set to `color_signal_map_Φ(x) = observer_color_signal_Φ`, 
-        #    this limits the solution to metameres of `observer_color_signal_Φ`
+        #    this limits the solution to metamers of `observer_color_signal_Φ`
         #
-        #    These are both convex sets. Their intersection is also a convex set, which is the Metamere
+        #    These are both convex sets. Their intersection is also a convex set, which is the metamer
         #    Mismatch Body we are computing.
         #
         min_reflectance, max_reflectance = \
@@ -109,10 +109,10 @@ def compute_metamere_mismatch_body(
                 constraint_function_required_value=observer_color_signal_Φ,
                 bounds=(0,1))
 
-        # inline-test: these two reflectences should be metameres of `observer_color_signal_Φ`
+        # inline-test: these two reflectences should be metamers of `observer_color_signal_Φ`
         almost_equal(observer_color_signal_Φ, np.dot(color_signal_map_Φ.T, min_reflectance), decimal=2)
         almost_equal(observer_color_signal_Φ, np.dot(color_signal_map_Φ.T, max_reflectance), decimal=2)
-            
+        
         min_color_signal_Ψ = np.dot(color_signal_map_Ψ.T, min_reflectance) 
         max_color_signal_Ψ = np.dot(color_signal_map_Ψ.T, max_reflectance)
 

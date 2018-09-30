@@ -1,4 +1,4 @@
-from metamere_mismatch_body import compute_metamere_mismatch_body
+from metamer_mismatch_body import compute_metamer_mismatch_body
 import colour
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -54,12 +54,12 @@ XYZ_scale_factor = np.dot(XYZ_Observer_functions.T, D65_Illuminant)[1]
 gray_surface_reflectance = [0.5] * 31
 color_response = np.dot(XYZ_Observer_functions.T, np.multiply(A_Illuminant, gray_surface_reflectance))
 
-# compute the metamere mismatch body for the following scenario
+# compute the metamer mismatch body for the following scenario
 # A 50% gray is viewed by a human under A_illuminant, what is the MMB relative to a Nikon camera
 # viewing the scene under D65. This is observer *and* illuminant induced metamerism, usually you
 # vary one or the other.
 mmb_extrema_points = \
-	compute_metamere_mismatch_body(
+	compute_metamer_mismatch_body(
 		observer_color_signal_Φ=color_response,
 		observer_response_functions_Φ=XYZ_Observer_functions,
 		observer_response_functions_Ψ=Nikon_Observer_functions,
