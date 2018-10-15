@@ -29,7 +29,7 @@ def plot_3d_mesh(vertices, faces, filename):
 # 400nm to 700nm and 10nm increments
 standard_visible_range = colour.SpectralShape(400, 700, 10)
 
-# setup two observers and one illuminant for observer induced metamerism example
+# setup two observers for observer induced metamerism example
 XYZ_Observer_functions = \
 	colour.STANDARD_OBSERVERS_CMFS['CIE 1964 10 Degree Standard Observer'].\
 		interpolate(standard_visible_range).values
@@ -38,6 +38,7 @@ Nikon_Observer_functions = \
 	colour.characterisation.CAMERAS_RGB_SPECTRAL_SENSITIVITIES['Nikon 5100 (NPL)'].\
 		interpolate(standard_visible_range).values
 
+# setup two illuminants for illuminant induced metamerism example
 D65_Illuminant = \
 	colour.ILLUMINANTS_RELATIVE_SPDS["D65"].\
 		interpolate(standard_visible_range).values
@@ -52,23 +53,22 @@ XYZ_scale_factor = np.dot(XYZ_Observer_functions.T, D65_Illuminant)[1]
 
 # compute the nikon response to an illuminated gray surface
 gray_surface_reflectance = [0.5] * 31
-color_response = np.dot(XYZ_Observer_functions.T, np.multiply(A_Illuminant, gray_surface_reflectance))
+gray_color_response_Φ = np.dot(XYZ_Observer_functions.T, np.multiply(A_Illuminant, gray_surface_reflectance))
 
-# compute the metamer mismatch body for the following scenario
-# A 50% gray is viewed by a human under A_illuminant, what is the MMB relative to a Nikon camera
-# viewing the scene under D65. This is observer *and* illuminant induced metamerism, usually you
-# vary one or the other.
-mmb_extrema_points = \
+# Compute the metamer mismatch body for the following scenario:
+# A 50% gray is viewed by a human under illuminant A, what is the MMB relative to a Nikon camera
+# viewing the scene under D65. This is observer and illuminant induced metamerism.
+mmb_surface_points = \
 	compute_metamer_mismatch_body(
-		observer_color_signal_Φ=color_response,
+		observer_color_signal_Φ=gray_color_response_Φ,
 		observer_response_functions_Φ=XYZ_Observer_functions,
 		observer_response_functions_Ψ=Nikon_Observer_functions,
 		scene_illumination_Φ=A_Illuminant,
 		scene_illumination_Ψ=D65_Illuminant)
 
 # scale the result so that the illuminant color is the upper bound
-relative_mmb_extrema_points = [p/XYZ_scale_factor for p in mmb_extrema_points]
+relative_mmb_surface_points = [p/XYZ_scale_factor for p in mmb_surface_points]
 
-mmb_convex_hull = ConvexHull(relative_mmb_extrema_points)
+mmb_convex_hull = ConvexHull(relative_mmb_surface_points)
 
 plot_3d_mesh(mmb_convex_hull.points, mmb_convex_hull.simplices, "mmb_plot.html")
