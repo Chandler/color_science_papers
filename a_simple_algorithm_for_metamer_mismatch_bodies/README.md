@@ -1,4 +1,4 @@
-This repo contains a python 3 implementation of Dr. Paul Centore's 2016 paper:
+This folder contains a python 3 implementation of Dr. Paul Centore's 2016 paper:
 
 'A Simple Algorithm for Metamer Mismatch Bodies'
 

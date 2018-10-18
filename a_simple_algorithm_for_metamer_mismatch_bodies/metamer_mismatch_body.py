@@ -22,9 +22,9 @@ def sample_unit_sphere(npoints):
 
 def solve_linear_program(
     object_function_coefficents,
-    constraint_function,
-    constraint_function_required_value,
-    bounds):
+    constraint_function=None,
+    constraint_function_required_value=None,
+    bounds=None):
     """
     This method minimizes and maximizes a linear function with respect to
     an equality constraint and lower and upper bounds
@@ -109,13 +109,62 @@ def compute_metamer_mismatch_body(
                 constraint_function_required_value=observer_color_signal_Φ,
                 bounds=(0,1))
 
-        # inline-test: these two reflectences should be metamers of `observer_color_signal_Φ`
-        almost_equal(observer_color_signal_Φ, np.dot(color_signal_map_Φ.T, min_reflectance), decimal=2)
-        almost_equal(observer_color_signal_Φ, np.dot(color_signal_map_Φ.T, max_reflectance), decimal=2)
+        # # inline-test: these two reflectences should be metamers of `observer_color_signal_Φ`
+        # almost_equal(observer_color_signal_Φ, np.dot(color_signal_map_Φ.T, min_reflectance), decimal=2)
+        # almost_equal(observer_color_signal_Φ, np.dot(color_signal_map_Φ.T, max_reflectance), decimal=2)
         
         min_color_signal_Ψ = np.dot(color_signal_map_Ψ.T, min_reflectance) 
         max_color_signal_Ψ = np.dot(color_signal_map_Ψ.T, max_reflectance)
 
         mismatch_body_extrema_points.extend([min_color_signal_Ψ, max_color_signal_Ψ])
 
-    return mismatch_body_extrema_points
+    # scale the resulting body so that the brightest illuminant color response == 1
+    scale_factor = np.max(np.dot(observer_response_functions_Ψ.T, scene_illumination_Ψ))
+
+    return [p/scale_factor for p in mismatch_body_extrema_points]
+
+def compute_object_color_solid(
+    observer_response_functions,
+    scene_illumination=equal_energy_illumination_vector,
+    sampling_resolution=100):
+    """
+    The linear programming formulation of the OCS is identical to that of the MMB minus
+    the constraints related to the second observer.
+
+    An MMB is a product of two observers but the OCS is simply the set of all object colors
+    for a single observer.
+
+    "Computing the object colour solid using spherical sampling"
+    https://ueaeprints.uea.ac.uk/62975/
+    """
+    assert_shape(observer_response_functions, (LIGHT_DIMENSIONS, COLOR_DIMENSIONS))
+    assert_shape(scene_illumination,          (LIGHT_DIMENSIONS,))
+
+    color_signal_map = (observer_response_functions.T * scene_illumination).T
+
+    ocs_extrema_points = []
+
+    # iterate over a sampling of points on the unit sphere, interpreted as direction vectors
+    # pointing in all directions.
+    for direction_vector in sample_unit_sphere(sampling_resolution):
+
+        direction_functional = direction_vector
+
+        # compose the direction functional R3 -> R, with the color signal map to produce
+        # a new funtional R31 -> R. 
+        ΨF = np.dot(color_signal_map, direction_functional)
+
+        min_reflectance, max_reflectance = \
+            solve_linear_program(
+                object_function_coefficents=ΨF,
+                bounds=(0,1))
+
+        min_color_signal = np.dot(color_signal_map.T, min_reflectance) 
+        max_color_signal = np.dot(color_signal_map.T, max_reflectance)
+
+        ocs_extrema_points.extend([min_color_signal, max_color_signal])
+
+    # scale the resulting body so that the brightest illuminant color response == 1
+    scale_factor = np.max(np.dot(observer_response_functions.T, scene_illumination))
+
+    return [p/scale_factor for p in ocs_extrema_points]
